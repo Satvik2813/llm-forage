@@ -9,11 +9,10 @@ from forge.config import ModelConfig
 class LLMClient:
     def __init__(self, config: ModelConfig, api_key: str | None = None):
         self.config = config
+        self.last_response = ""
 
-        # Load environment variables from .env
         load_dotenv()
 
-        # Use provided API key, otherwise get it from .env
         api_key = api_key or os.getenv("GEMINI_API_KEY")
 
         if not api_key:
@@ -38,3 +37,19 @@ class LLMClient:
             )
 
         return response.text
+
+    def stream(self, message: str):
+        chunks = []
+
+        response = self.client.models.generate_content_stream(
+            model=self.config.model,
+            contents=message,
+            config=self.config.to_gemini_config()
+        )
+
+        for chunk in response:
+            if chunk.text is not None:
+                chunks.append(chunk.text)
+                yield chunk.text
+
+        self.last_response = "".join(chunks)

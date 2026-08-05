@@ -18,3 +18,9 @@ from forge.client import LLMClient
 llm = LLMClient(ModelConfig(model="flash"))
 
 print(llm.chat("Say hi in exactly 3 words"))
+
+for c in llm.stream("Count from 1 to 10 slowly"):
+    print(c, end="", flush=True)
+
+print()
+print("Full response:", llm.last_response)

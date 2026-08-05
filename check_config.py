@@ -12,3 +12,9 @@ try:
     print("BUG: validation work avvatledu")
 except ValueError as e:
     print("validation OK:", e)
+
+from forge.client import LLMClient
+
+llm = LLMClient(ModelConfig(model="flash"))
+
+print(llm.chat("Say hi in exactly 3 words"))

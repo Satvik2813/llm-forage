@@ -5,9 +5,9 @@ from typing import Optional
 @dataclass
 class ModelConfig:
     ALIASES = {
-        "flash": "gemini-2.0-flash",
-        "flash-lite": "gemini-2.0-flash-lite",
-    }
+    "flash": "gemini-3.5-flash",
+    "flash-lite": "gemini-3.5-flash-lite",
+}
 
     model: str
     temperature: float = 0.7

@@ -72,7 +72,7 @@ llm = LLMClient(config)
 conv = Conversation()
 
 # The conversation history is maintained automatically
-print(llm.chat("My name is Adithya.", conv))
+print(llm.chat("My name is Satvik.", conv))
 print(llm.chat("What's my name?", conv))
 ```
 

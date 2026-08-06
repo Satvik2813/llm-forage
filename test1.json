@@ -1,0 +1,50 @@
+[
+    {
+        "role": "user",
+        "parts": [
+            {
+                "text": "hi"
+            }
+        ]
+    },
+    {
+        "role": "model",
+        "parts": [
+            {
+                "text": "Hello."
+            }
+        ]
+    },
+    {
+        "role": "user",
+        "parts": [
+            {
+                "text": "what is AI ?"
+            }
+        ]
+    },
+    {
+        "role": "model",
+        "parts": [
+            {
+                "text": "Artificial Intelligence (AI) is the simulation of human intelligence by computer systems."
+            }
+        ]
+    },
+    {
+        "role": "user",
+        "parts": [
+            {
+                "text": "who is principal of IARE ?"
+            }
+        ]
+    },
+    {
+        "role": "model",
+        "parts": [
+            {
+                "text": "The Principal of the Institute of Aeronautical Engineering (IARE) in Hyderabad is **Dr. L. V. Narasimha Prasad**."
+            }
+        ]
+    }
+]

@@ -188,9 +188,17 @@ LLMForge is built to handle the realities of network communication:
 - **Smart Streaming:** Streaming requests are never retried once output has started, guaranteeing that no duplicate text is yielded to the application.
 - **Conversation Consistency:** If a request fails entirely or is manually cancelled by the user, the corresponding user message is immediately rolled back. This prevents orphan user messages from corrupting the conversation context.
 
+## Known Limitations
+
+- **Gemini-only:** The public-facing architecture separates the CLI from provider-specific code, but the current `LLMClient` implementation relies exclusively on the Google Gemini SDK. The project is structured to make additional provider integrations easier, but it is not currently a multi-provider library.
+- **API rate limits:** API usage is subject to the limits of the user's Gemini API tier. Free-tier limits can restrict rapid or heavy testing scenarios.
+- **Message-based trimming:** `Conversation.trim()` limits history by message count, not token count. A conversation containing a small number of very large messages can therefore still approach or exceed the model's context window.
+- **Static pricing data:** Model pricing is currently hardcoded and must be updated manually when provider pricing changes or when new models are added. Cost values should therefore be treated as estimates.
+
 ## Future Improvements
 
 - Support for additional LLM providers (e.g., OpenAI, Anthropic).
+- Token-aware conversation trimming to strictly enforce context window boundaries.
+- Maintainable or dynamic pricing data configurations for accurate cost estimations.
 - Comprehensive automated test suite.
-- Richer token tracking and metrics visualization.
 - Configurable storage backends for conversation persistence (e.g., SQLite).

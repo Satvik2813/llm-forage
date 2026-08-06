@@ -6,6 +6,7 @@ from google import genai
 from google.genai import errors
 
 from forge.config import ModelConfig
+from forge.conversation import Conversation
 
 
 class LLMClient:
@@ -36,62 +37,113 @@ class LLMClient:
 
         self.client = genai.Client(api_key=api_key)
 
-    def chat(self, message: str) -> str:
-        response = self._with_retry(
-            self.client.models.generate_content,
-            model=self.config.model,
-            contents=message,
-            config=self.config.to_gemini_config()
-        )
+    def chat(
+        self,
+        message: str,
+        conversation: Conversation | None = None,
+    ) -> str:
 
-        if not response.text:
-            raise RuntimeError(
-                "Gemini returned an empty response. "
-                "The response may have been blocked by a safety filter."
+        if conversation is None:
+            contents = message
+        else:
+            conversation.add_user(message)
+            contents = conversation.to_contents()
+
+        try:
+            response = self._with_retry(
+                self.client.models.generate_content,
+                model=self.config.model,
+                contents=contents,
+                config=self.config.to_gemini_config(),
             )
 
+            if not response.text:
+                raise RuntimeError(
+                    "Gemini returned an empty response. "
+                    "The response may have been blocked by a safety filter."
+                )
+
+        except Exception:
+            if conversation is not None:
+                conversation.remove_last()
+
+            raise
+
         self.last_response = response.text
+
+        if conversation is not None:
+            conversation.add_model(response.text)
+
         return response.text
 
-    def stream(self, message: str):
+    def stream(
+        self,
+        message: str,
+        conversation: Conversation | None = None,
+    ):
         chunks = []
         started = False
+        committed = False
 
-        for retry in range(self.max_retries + 1):
-            try:
-                response = self.client.models.generate_content_stream(
-                    model=self.config.model,
-                    contents=message,
-                    config=self.config.to_gemini_config()
-                )
+        if conversation is None:
+            contents = message
+        else:
+            conversation.add_user(message)
+            contents = conversation.to_contents()
 
-                for chunk in response:
-                    if chunk.text is not None:
-                        started = True
-                        chunks.append(chunk.text)
-                        yield chunk.text
+        try:
+            for retry in range(self.max_retries + 1):
+                try:
+                    response = self.client.models.generate_content_stream(
+                        model=self.config.model,
+                        contents=contents,
+                        config=self.config.to_gemini_config(),
+                    )
 
-                self.last_response = "".join(chunks)
-                return
+                    for chunk in response:
+                        if chunk.text is not None:
+                            started = True
+                            chunks.append(chunk.text)
+                            yield chunk.text
 
-            except errors.APIError as e:
-                if started:
-                    raise
+                    full_response = "".join(chunks)
 
-                if e.code not in self.RETRYABLE_CODES:
-                    raise
+                    if not full_response:
+                        raise RuntimeError(
+                            "Gemini returned an empty response. "
+                            "The response may have been blocked by a safety filter."
+                        )
 
-                if retry == self.max_retries:
-                    raise
+                    self.last_response = full_response
 
-                delay = self.base_delay * (2 ** retry)
+                    if conversation is not None:
+                        conversation.add_model(full_response)
 
-                print(
-                    f"[retry {retry + 1}/{self.max_retries}] "
-                    f"API error {e.code}, waiting {delay:.1f}s..."
-                )
+                    committed = True
+                    return
 
-                time.sleep(delay)
+                except errors.APIError as e:
+                    if started:
+                        raise
+
+                    if e.code not in self.RETRYABLE_CODES:
+                        raise
+
+                    if retry == self.max_retries:
+                        raise
+
+                    delay = self.base_delay * (2 ** retry)
+
+                    print(
+                        f"[retry {retry + 1}/{self.max_retries}] "
+                        f"API error {e.code}, waiting {delay:.1f}s..."
+                    )
+
+                    time.sleep(delay)
+
+        finally:
+            if conversation is not None and not committed:
+                conversation.remove_last()
 
     def _with_retry(self, func, *args, **kwargs):
         for retry in range(self.max_retries + 1):

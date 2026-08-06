@@ -1,29 +1,27 @@
-from forge.config import ModelConfig
 from forge.client import LLMClient
-from forge.conversation import Conversation
+from forge.config import ModelConfig
 
-llm = LLMClient(ModelConfig(model="flash"))
 
-print("--- memory ---")
-conv = Conversation()
-llm.chat("My name is Satvik", conv)
-print(llm.chat("What's my name?", conv))
-print("len:", len(conv))
+config = ModelConfig(
+    model="gemini-3.5-flash",
+)
 
-print("--- orphan chat ---")
-bad = LLMClient(ModelConfig(model="does-not-exist"))
-conv2 = Conversation()
-try:
-    bad.chat("hi", conv2)
-except Exception:
-    pass
-print("len:", len(conv2))
+llm = LLMClient(config)
 
-print("--- orphan stream ---")
-conv3 = Conversation()
-try:
-    for c in bad.stream("hi", conv3):
-        pass
-except Exception:
-    pass
-print("len:", len(conv3))
+
+print("=== CHAT 1 ===")
+print(llm.chat("hi"))
+
+print("\n=== CHAT 2 ===")
+print(llm.chat("hello there"))
+
+print("\n=== STREAM ===")
+
+for chunk in llm.stream("count to 3"):
+    print(chunk, end="", flush=True)
+
+print()
+
+
+print("\n=== USAGE ===")
+print(llm.usage.summary())

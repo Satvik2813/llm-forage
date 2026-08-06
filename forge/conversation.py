@@ -35,6 +35,7 @@ class Conversation:
         if max_messages < 0:
             raise ValueError("max_messages must be >= 0")
 
+        # Keep complete user/model pairs only.
         max_messages -= max_messages % 2
 
         if max_messages == 0:
@@ -46,6 +47,7 @@ class Conversation:
 
         drop_count = len(self.messages) - max_messages
 
+        # Never break a user/model pair.
         if drop_count % 2 != 0:
             drop_count += 1
 
